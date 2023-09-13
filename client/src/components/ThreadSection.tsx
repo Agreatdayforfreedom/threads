@@ -10,15 +10,6 @@ import SubThread from "./SubThread";
 import Thread from "./Thread";
 import useThread from "../context/hooks/useThread";
 
-// export interface Thread {
-//   id: number;
-//   content: string;
-//   username: string;
-//   userid: number;
-//   path_content_uid: string;
-//   created_at: Date;
-// }
-
 export interface IThread {
   id: number;
   content: string;
@@ -27,6 +18,8 @@ export interface IThread {
   node_path: string;
   created_at: string;
   userid: number;
+  avatar: string;
+  st_count: number;
   username: string;
   deleted: boolean;
   updated: boolean;
@@ -53,9 +46,8 @@ const ThreadSection = () => {
     const config = getAxiosConfig();
     const url = import.meta.env.VITE_BACK_URL;
     const { data } = await axios(`${url}/thread?page=${page}`, config);
-    // console.log({ data }, "data");
-    handleThreadsState([...threads, ...data]);
-    if (data.length + threads.length === data[1]) {
+    handleThreadsState([...threads, ...data.threads]);
+    if (data.threads.length + threads.length === data.count) {
       setStopFetch(true);
       setisLoading(false);
     }
@@ -75,7 +67,6 @@ const ThreadSection = () => {
     ) {
       return;
     }
-    console.log(window.innerHeight);
     fetchData();
   };
 
@@ -91,27 +82,6 @@ const ThreadSection = () => {
   function handleCreate() {
     setOpen(!open);
     setUpdate({} as UpdateState);
-  }
-
-  useEffect(() => console.log(threads), []);
-
-  function updateState(thread: IThread, type: number) {
-    //1: create, 2: update, 3: delete
-    if (type === 1) {
-      handleThreadsState([thread, ...threads]);
-    } else if (type === 2) {
-      const updateThread = threads.map((item) => {
-        if (item.id === thread.id) {
-          return thread;
-        }
-        return item;
-      });
-      handleThreadsState(updateThread);
-    } else if (type === 3) {
-      handleThreadsState([...threads.filter((t) => t.id !== thread.id)]);
-    } else {
-      console.log(`Error invalid ${type} type`);
-    }
   }
 
   return (
@@ -133,16 +103,7 @@ const ThreadSection = () => {
 
       {isLoading && <Loading />}
       {stopFetch ? <AllThreadsCatchedCard /> : ""}
-      {open ? (
-        <ThreadForm
-          open={open}
-          close={close}
-          update={update}
-          updateState={updateState}
-        />
-      ) : (
-        ""
-      )}
+      {open ? <ThreadForm open={open} close={close} update={update} /> : ""}
     </section>
   );
 };

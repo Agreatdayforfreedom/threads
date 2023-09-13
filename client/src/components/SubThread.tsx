@@ -8,36 +8,28 @@ import { FN_UST } from "./Thread";
 import moment from "moment";
 
 interface Props {
-  subThread: any;
+  subThreads: IThread[];
   loading?: boolean;
   updateSubThread: FN_UST;
 }
 
-const SubThread = ({ subThread, updateSubThread, loading }: Props) => {
-  useEffect(() => {
-    console.log(subThread, "<");
-  }, []);
+const SubThread = ({ subThreads, loading, updateSubThread }: Props) => {
   if (loading) return <Loading />;
+
   return (
     <div>
-      {subThread &&
-        subThread.map((st: IThread) => (
-          <SubThread_Card
-            sts={subThread}
-            st={st}
-            updateSubThread={updateSubThread}
-          />
+      {subThreads &&
+        subThreads.map((st: IThread) => (
+          <SubThread_Card st={st} updateSubThread={updateSubThread} />
         ))}
     </div>
   );
 };
 
 const SubThread_Card = ({
-  sts,
   st,
   updateSubThread,
 }: {
-  sts: IThread[];
   st: IThread;
   updateSubThread: FN_UST;
 }) => {
@@ -48,25 +40,58 @@ const SubThread_Card = ({
   const [updateReplyContent, setUpdateReplyContent] = useState(
     st.content ? st.content : ""
   );
+  const [likes, setLikes] = useState<number>(0);
   const [toggleMenu, setToggleMenu] = useState(false);
 
+  async function like_unlike(st: IThread) {
+    const config = getAxiosConfig();
+    setLoading(true);
+    const url = import.meta.env.VITE_BACK_URL;
+    if (st.liked) {
+      //dislike
+      const { data } = await axios.put(
+        `${url}/thread/like/${st.id}`,
+        {},
+        config
+      );
+      updateSubThread(data, data.thread, "LIKE");
+      setLikes(likes - 1);
+    } else {
+      //like
+      const { data } = await axios.put(
+        `${url}/thread/like/${st.id}`,
+        {},
+        config
+      );
+
+      updateSubThread(data, data.thread, "LIKE");
+      setLikes(likes + 1);
+    }
+    setLoading(false);
+  }
+
+  const config = getAxiosConfig();
+  const url = import.meta.env.VITE_BACK_URL;
+
   useEffect(() => {
-    console.log(st);
+    async function fn_fetch() {
+      const { data } = await axios(`${url}/thread/likes/${st.id}`, config);
+      setLikes(data);
+    }
+    fn_fetch();
   }, []);
 
-  //todo: update state
   function openReplyForm() {
     setOpenReplybool(true);
   }
   function closeReplyForm() {
     setOpenReplybool(false);
   }
-  //todo: update, delete and likes
+
   async function handleReplyForm(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setLoading(true);
 
-    //do it!
     const config = getAxiosConfig();
     const url = import.meta.env.VITE_BACK_URL;
     const { data } = await axios.post(
@@ -108,30 +133,6 @@ const SubThread_Card = ({
     setToggleMenu(!toggleMenu);
   }
 
-  async function like_unlike() {
-    const config = getAxiosConfig();
-    setLoading(true);
-    const url = import.meta.env.VITE_BACK_URL;
-    if (st.liked) {
-      //dislike
-      const { data } = await axios.put(
-        `${url}/thread/like/${st.id}`,
-        {},
-        config
-      );
-      updateSubThread(data, data.thread, "LIKE");
-    } else {
-      //like
-      const { data } = await axios.put(
-        `${url}/thread/like/${st.id}`,
-        {},
-        config
-      );
-
-      updateSubThread(data, data.thread, "LIKE");
-    }
-  }
-
   async function handleRemove() {
     const config = getAxiosConfig();
     const remove: boolean = confirm("Are you sure to delete this thread?");
@@ -142,15 +143,12 @@ const SubThread_Card = ({
           `${url}/thread/delete/sub/${st.id}`,
           config
         );
-
-        console.log({ data });
         updateSubThread(data, data.id, "DELETE");
       } catch (error) {
         console.log(error);
       }
     }
   }
-  //todo: unlike
   return (
     <div
       style={{ marginLeft: `${st.deep * 2 + 15}px` }}
@@ -159,10 +157,7 @@ const SubThread_Card = ({
       {/* subthread card */}
       {/* user info */}
       <div className="flex items-end">
-        <img
-          src={`https://www.gravatar.com/avatar/${st.deep}?d=robohash&f=y&s=128`}
-          className="w-8 h-8 rounded-full"
-        ></img>
+        <img src={st.avatar} className="w-8 h-8 rounded-full"></img>
         <div>
           <span>{st.username}</span>
           <span className="px-1">&#183;</span>
@@ -177,13 +172,19 @@ const SubThread_Card = ({
           <p>{st.deleted ? "[removed]" : st.content}</p>
         </div>
         <div className="w-full h-5 flex relative">
-          <button onClick={like_unlike}>
+          <button
+            onClick={() => like_unlike(st)}
+            disabled={loading}
+            className="disabled:!bg-transparent flex items-center"
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              fill={st.liked ? "#e25822" : "none"}
+              fill={loading ? "#efefef10" : st.liked ? "#e25822" : "none"}
               viewBox="0 0 24 24"
               stroke-width="1.5"
-              stroke={st.liked ? "#e25822" : "currentColor"}
+              stroke={
+                loading ? "#efefef20" : st.liked ? "#e25822" : "currentColor"
+              }
               className="w-6 h-6 a-icon"
             >
               <path
@@ -192,6 +193,7 @@ const SubThread_Card = ({
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
               />
             </svg>
+            <span>{likes}</span>
           </button>
           <button onClick={openReplyForm} className="flex">
             <svg
@@ -228,8 +230,6 @@ const SubThread_Card = ({
           </button>
           {toggleMenu ? (
             <ThreadMenu
-              st={sts}
-              id={st.id}
               handleUpdate={handleUpdate}
               handleRemove={handleRemove}
             />
@@ -314,13 +314,9 @@ const SubThread_Card = ({
 };
 
 const ThreadMenu = ({
-  st,
-  id,
   handleUpdate,
   handleRemove,
 }: {
-  st: IThread[];
-  id: number;
   handleUpdate: () => void;
   handleRemove: () => void;
 }) => {
@@ -342,12 +338,15 @@ const ThreadMenu = ({
   );
 };
 
-const T = ({ st, updateSubThread }: { st: IThread; updateSubThread: any }) => {
-  return (
-    <>
-      <SubThread subThread={st.child} updateSubThread={updateSubThread} />
-    </>
-  );
+const T = ({
+  st,
+  updateSubThread,
+}: // setSubThreadFn,
+{
+  st: IThread;
+  updateSubThread: FN_UST;
+}) => {
+  return <SubThread subThreads={st.child} updateSubThread={updateSubThread} />;
 };
 
 export default SubThread;

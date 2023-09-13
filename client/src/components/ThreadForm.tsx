@@ -3,6 +3,7 @@ import React, { FormEvent, useEffect, useState } from "react";
 import { getAxiosConfig } from "../axios_config";
 import Loading from "./Loading";
 import { IThread } from "./ThreadSection";
+import useThread from "../context/hooks/useThread";
 
 interface Props {
   open: boolean;
@@ -11,19 +12,19 @@ interface Props {
     id?: number;
     content?: string;
   };
-  updateState: (thread: IThread, type: number) => void;
 }
 
 const ThreadForm = ({
   open,
   close,
   update, //update mode
-  updateState, // update thread state
 }: Props) => {
   const [content, setContent] = useState<string>(
     update?.content ? update.content : ""
   );
   const [loading, setLoading] = useState(false);
+
+  const { updateThread } = useThread();
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -37,7 +38,7 @@ const ThreadForm = ({
         { content },
         config
       );
-      updateState(data, 2);
+      updateThread(data, 2);
       setContent("");
     } else {
       //create
@@ -47,7 +48,7 @@ const ThreadForm = ({
         { content },
         config
       );
-      updateState(data, 1);
+      updateThread(data, 1);
       setContent("");
     }
     close();

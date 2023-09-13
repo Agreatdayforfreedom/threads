@@ -1,4 +1,4 @@
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import React, { ChangeEvent, FormEvent, useState } from "react";
 import Loading from "../components/Loading";
 import { Link, useNavigate } from "react-router-dom";
@@ -23,11 +23,16 @@ const Login = () => {
       }, 3000);
     }
     setLoading(true);
-    const { data } = await axios.post(`${url}/login`, { ...form });
-    if (data.token) {
-      console.log("xd");
-      localStorage.setItem("access_token", data.token);
-      nav("/");
+    try {
+      const { data } = await axios.post(`${url}/login`, { ...form });
+      if (data.token) {
+        localStorage.setItem("access_token", data.token);
+        nav("/");
+      }
+    } catch (error) {
+      if (error instanceof AxiosError) {
+        setAlert({ message: error.response?.data.message });
+      }
     }
     setLoading(false);
   }

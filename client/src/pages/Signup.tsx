@@ -33,7 +33,6 @@ const Signup = () => {
     setLoading(true);
     const url = import.meta.env.VITE_BACK_URL;
     const { data } = await axios.post(`${url}/signup`, { ...form });
-    console.log(data, "<<<<<<<<<<<<<<<<<<<<<<<");
 
     if (data.token) {
       localStorage.setItem("access_token", data.token);

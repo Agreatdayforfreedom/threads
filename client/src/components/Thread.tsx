@@ -7,51 +7,18 @@ import SubThread from "./SubThread";
 interface Props {
   setUpdate: (state: UpdateState) => void;
   setOpen: (state: boolean) => void;
-  thread: any;
+  thread: IThread;
 }
 
 export type FN_UST = (
-  // obj: IThread,
   new_obj: IThread,
   id: number,
   type: "UPDATE" | "CREATE" | "DELETE" | "LIKE"
 ) => void;
 
 const Thread = ({ thread, setUpdate, setOpen }: Props) => {
+  const [subThreads, setSubThreads] = useState<IThread[]>([]);
   const [loading, setLoading] = useState(false);
-  const [subThreads, setSubThreads] = useState<IThread[]>([]); //should be on a global
-
-  function handleUpdate(id: number, content: string) {
-    setOpen(true);
-    setUpdate({ id, content });
-  }
-
-  function updateSubThread(
-    // obj: IThread,
-    new_obj: IThread,
-    id: number, // thread id to update
-    type: "UPDATE" | "CREATE" | "DELETE" | "LIKE"
-  ) {
-    setLoading(true);
-    let tmp = [...subThreads];
-
-    //update
-    if (type === "UPDATE") {
-      const arr = a(tmp, id, new_obj);
-      setSubThreads(arr);
-    } else if (type === "CREATE") {
-      //add new item
-      const arr = iterate(tmp, id, new_obj);
-      setSubThreads(arr);
-    } else if (type === "DELETE") {
-      const arr = a(tmp, id, new_obj);
-      setSubThreads(arr);
-    } else if (type === "LIKE") {
-      const arr = a(tmp, id, new_obj);
-      setSubThreads(arr);
-    } else console.log("Invalid type");
-    setLoading(false);
-  }
 
   function iterate(arr: IThread[], id: number, obj: IThread) {
     arr.map((st) => {
@@ -80,6 +47,41 @@ const Thread = ({ thread, setUpdate, setOpen }: Props) => {
     return arr;
   }
 
+  function updateSubThread(
+    new_obj: IThread,
+    id: number, // thread id to update
+    type: "UPDATE" | "CREATE" | "DELETE" | "LIKE"
+  ) {
+    setLoading(true);
+    let tmp = [...subThreads];
+
+    //update
+    if (type === "UPDATE") {
+      const arr = a(tmp, id, new_obj);
+      setSubThreadFn(arr);
+    } else if (type === "CREATE") {
+      //add new item
+      const arr = iterate(tmp, id, new_obj);
+      setSubThreadFn(arr);
+    } else if (type === "DELETE") {
+      const arr = a(tmp, id, new_obj);
+      setSubThreadFn(arr);
+    } else if (type === "LIKE") {
+      const arr = a(tmp, id, new_obj);
+      setSubThreadFn(arr);
+    } else console.log("Invalid type");
+    setLoading(false);
+  }
+
+  function setSubThreadFn(thread: IThread[]) {
+    setSubThreads(thread);
+  }
+
+  function handleUpdate(id: number, content: string) {
+    setOpen(true);
+    setUpdate({ id, content });
+  }
+
   async function handleDelete(id: number) {
     const remove: boolean = confirm("Are you sure to delete this thread?");
     if (remove) {
@@ -89,12 +91,6 @@ const Thread = ({ thread, setUpdate, setOpen }: Props) => {
     }
   }
 
-  function setSubThreadFn(thread: any) {
-    setSubThreads(thread);
-  }
-  // useEffect(() => {
-  //   console.log(subThreads, ">,<");
-  // }, [subThreads]);
   return (
     <div className="border my-3 p-2 rounded border-slate-600 pt-4">
       <div className="  flex justify-between  border-slate-600">
@@ -153,14 +149,15 @@ const Thread = ({ thread, setUpdate, setOpen }: Props) => {
       </div>
       <ThreadActions
         thread={thread}
-        setSubThread={setSubThreadFn}
         setLoading={setLoading}
+        setSubThreadFn={setSubThreadFn}
+        // like_unlike={like_unlike}
       />
       <CommentForm />
       <SubThread
-        subThread={subThreads}
-        updateSubThread={updateSubThread}
+        subThreads={subThreads}
         loading={loading}
+        updateSubThread={updateSubThread} //todo sub delete, likes
       />
     </div>
   );
@@ -173,8 +170,8 @@ function CommentForm() {
         <textarea
           className="!border-b rounded-b-none mr-2 h-[30px] !w-full !text-start  p-1 rounded focus:h-32 focus:outline-none focus:!border-indigo-800 transition-all"
           placeholder="Leave a comment"
-          name=""
-          id=""
+          name="comment"
+          id="commnet"
         ></textarea>
         <button className="bg-indigo-800 p-1 rounded text-sm hover:bg-indigo-700 transition-colors">
           Post

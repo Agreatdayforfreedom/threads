@@ -6,7 +6,7 @@ import Loading from "../components/Loading";
 const AuthLayout = () => {
   const { auth, loading } = useAuth();
   if (loading) return <Loading />;
-  if (auth) return <Navigate to="/" />;
+  if (auth.user) return <Navigate to="/" />;
   return <Outlet />;
 };
 
