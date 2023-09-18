@@ -6,14 +6,11 @@ import { Likes } from "./models/Likes";
 
 const AppDataSource = new DataSource({
   type: "postgres",
-  host: "localhost",
-  port: 5432,
-  username: "postgres",
-  password: "secret",
-  database: "postgres",
+  url: process.env.DATABASE_URL,
   entities: [User, Thread, Likes],
   synchronize: true,
-  logging: true,
+  logging: false,
+  ssl: true,
 });
 
 AppDataSource.initialize()
