@@ -10,7 +10,6 @@ const AppDataSource = new DataSource({
   entities: [User, Thread, Likes],
   synchronize: true,
   logging: false,
-  ssl: true,
 });
 
 AppDataSource.initialize()
